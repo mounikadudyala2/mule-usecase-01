@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="01a4a473-6475-4802-91b5-7425d8afbd5d" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="8b266f33-f981-4976-bd62-a2cfa933b4f5" >
+		<file:connection workingDir="/Users/mounikad/Desktop/mulesoft" />
+	</file:config>
+	<flow name="usecase_01Flow" doc:id="9f69728d-33c5-435f-b47f-7940863ddce1" >
+		<http:listener doc:name="Listener" doc:id="b13aa372-6346-487a-9d09-2e9635999ebe" config-ref="HTTP_Listener_config" path="/usecase-01"/>
+		<file:read doc:name="Read" doc:id="f687f670-16ce-4752-8f99-149e5d29df4e" config-ref="File_Config" path="/Users/mounikad/Desktop/mulesoft/Use_Case_1_Source.csv"/>
+		<logger level="INFO" doc:name="Logger" doc:id="32bd3178-204c-44e8-8b28-71cc1c0bc69b" message='"**you have successfully got**"'/>
+		<ee:transform doc:name="Transform Message" doc:id="8d4cb5b6-d775-444b-a2aa-76d7a049367a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var employee = payload distinctBy $.StudentID map(d,i) -> {
+	id:d.StudentID as Number,
+	name:d.StudentName,
+	CGPA:(payload filter d.StudentID==$.StudentID )
+	reduce(emp,avg=0) -> avg+(emp.SemesterMarks/4)
+}
+---
+employee
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="ea0d2f68-b004-4700-9474-945b6ff0008c" config-ref="File_Config" path="/Users/mounikad/Desktop/mulesoft/usecase1result.json"/>
+	</flow>
+</mule>
